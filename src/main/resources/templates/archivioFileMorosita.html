@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/sidebar">
+<head>
+    <title>Gierre | Archivio File Morosità</title>
+
+    <style>
+        .emme-toast {
+            width: 500px;
+        }
+    </style>
+</head>
+<body>
+
+<h1 class="m-0" layout:fragment="header">Archivio File Morosità</h1>
+<li class="breadcrumb-item active" layout:fragment="header-item">Archivio File Morosità</li>
+
+<div class="row" layout:fragment="row1">
+    <div class="col-12">
+        <div class="card" id="tableCard">
+            <div class="card-header">
+                <h3 class="card-title">Archivio File Morosità</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <table id="storicoDataTable" class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th>A</th>
+                        <th>B</th>
+                        <th>C</th>
+                        <th>D</th>
+                    </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+            <!-- /.card-body -->
+            <div class="overlay">
+                <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+            </div>
+        </div>
+        <!-- /.card -->
+    </div>
+    <!-- /.col -->
+</div>
+<!-- /.row -->
+
+<!-- Page specific script -->
+<th:block layout:fragment="script">
+    <script>
+
+        $(function() {
+            $('.sidebar .nav-item:contains("Archivio File")').addClass('menu-is-opening menu-open');
+            $('.sidebar .nav-link:contains("Archivio File")').addClass('active');
+            $('.sidebar .nav-link:contains("Morosità")').first().addClass('active');
+            $('#tableCard .overlay').hide();
+            createDataTable();
+        })
+
+        function download(fileId) {
+            var url = '/v1/api/knack/file/morosita/download/' + fileId
+            $.ajax({
+                url : '/v1/api/knack/file/morosita/download/' + fileId,
+                type : 'GET',
+                //contentType: "application/json;charset-UTF-8", //il tipo di contenuto inviato al server
+                //dataType: 'json', //il tipo di dati restituiti dal server
+                beforeSend : function(f) {
+                    $('#tableCard .overlay').show();
+                },
+                complete: function(f) {
+                    $('#tableCard .overlay').hide();
+                },
+                success : function(response) {
+                    showAlert('success', 'Il file ' + fileName + ' è stato scaricato correttamente');
+                    window.location = url;
+                    //window.location = response;
+                },
+                error : function(file, response, xmlHttpRequest) {
+                    showAlert('danger', 'C\'è stato un problema nello scaricare il file ' + fileName);
+                }
+            });
+        }
+
+        function elimina(fileId) {
+            if (confirm('Il file che hai selezionato verrà eliminato dall\'applicativo\nConfermi?'))
+                $.ajax({
+                url : '/v1/api/knack/file/morosita/delete/' + fileId,
+                type : 'DELETE',
+                beforeSend : function(f) {
+                    $('#tableCard .overlay').show();
+                },
+                complete: function(f) {
+                    $('#tableCard .overlay').hide();
+                    $('#storicoDataTable').DataTable().ajax.reload();
+                },
+                success : function(response) {
+                    showAlert('success', 'Il file ' + fileName + ' è stato cancellato correttamente');
+                },
+                error : function(file, response, xmlHttpRequest) {
+                    showAlert('danger', 'C\'è stato un problema nel cancellare il file ' + fileName);
+                }
+            });
+        }
+
+        function createDataTable() {
+
+            $("#storicoDataTable").DataTable({
+                ajax: {
+                    url: '/v1/api/knack/file/morosita/get/all',
+                    type: 'GET',
+                    async: false,
+                    dataSrc: function ( json ) {    // cambi il json di risposta
+                        for ( var i=0, ien=json.data.length ; i<ien ; i++ ) {
+                            json.data[i][0] = '';
+                            json.data[i][2] = '';
+                            json.data[i][3] = '';
+                        }
+                        return json.data;
+                    }
+                },
+                columns: [
+                    { title: 'Data Upload',
+                        render: function(row, type, data) {
+                            return italianFormat(data.createdAt);
+                        }
+                    },
+                    { title: 'Nome File', data: 'name' },
+                    { title: 'Download',
+                        render: function(row, type, data) {
+                            return "<button type='button' id='fileDownload"+data.id+"' class='btn btn-success' onclick='download(\""+data.id+"\")'> Download </button>";
+                        }
+                    },
+                    { title: 'Elimina',
+                        render: function(row, type, data) {
+                            return "<button type='button' id='fileDelete"+data.id+"' class='btn btn-danger' onclick='elimina(\""+data.id+"\")'> Elimina </button>";
+                        }
+                    }
+                ],
+                columnDefs: [
+                    { width: "25%", targets: 0 },
+                    { width: "25%", className: 'text-md-center', targets: 1 },
+                    { width: "25%", className: 'text-md-center', orderable: false, targets: 2 },
+                    { width: "25%", className: 'text-md-center', orderable: false, targets: 3 }
+                ],
+                //dom: "<'row' <'col-md-8 text-center text-md-left'B>>" +
+                //  "<'row' <'col-sm-12 text-center't> >" +
+                // "<'row' <'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p> >",
+                //createdRow: function( row, data, dataIndex){},
+                //destroy: true,
+                //stateSave: true,  //salva le azioni fatte anche dopo il refresh
+                scrollY: $(window).height()-475,
+                //scrollX: true,
+                //scrollCollapse: true, //Questo farà sì che il contenitore corrisponda all'altezza delle righe mostrate nella tabella se tale altezza è inferiore a quella data dal scrollY.
+                paging: false,
+                responsive: true,
+                lengthChange: false,
+                autoWidth: false,
+                buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+                language: {
+                    //info: "_START_ da _END_ tot: _TOTAL_",
+                    infoFiltered: "- filtrati: _TOTAL_",
+                    info: "Utenti totali: _MAX_",
+                    infoEmpty: "0 risultati",
+                    search: "Cerca:",
+                    emptyTable: "Nessun risultato da mostrare"
+                },
+                order: [0, 'asc']
+            }).buttons().container().appendTo('#storicoDataTable_wrapper .col-md-6:eq(0)');
+        }
+
+    </script>
+</th:block>
+</body>
+</html>

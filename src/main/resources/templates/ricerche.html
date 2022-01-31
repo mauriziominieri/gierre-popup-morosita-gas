@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/sidebar">
+<head>
+  <title>Gierre | Ricerche Operatori</title>
+</head>
+<body>
+
+  <h1 class="m-0" layout:fragment="header">Ricerche</h1>
+  <li class="breadcrumb-item active" layout:fragment="header-item">Ricerche</li>
+
+        <div class="row" layout:fragment="row1">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Ricerche operatori</h3>
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="ricercheDataTable" class="table table-bordered table-striped">
+                  <thead>
+                  <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                  <tfoot>
+                  <tr>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>C</th>
+                    <th>D</th>
+                    <th>E</th>
+                  </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+
+<!-- Page specific script -->
+<th:block layout:fragment="script">
+<script>
+
+	$(function() {
+      $('.sidebar .nav-item:contains("Pagine")').addClass('menu-is-opening menu-open');
+      $('.sidebar .nav-link:contains("Pagine")').addClass('active');
+      $('.sidebar .nav-link:contains("Ricerche")').addClass('active');
+      createDataTable();
+	})
+
+	function italianFormat(date){
+  		var datearray = date.split("-");
+  		var newdate = datearray[2] + '/' + datearray[1] + '/' + datearray[0];
+  		return newdate;
+	}
+
+	function capitalize(str) {
+		return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+	}
+
+    function createDataTable() {
+
+      $("#ricercheDataTable").DataTable({
+        ajax: {
+          url: '/v1/api/knack/get/ricerche',
+          type: 'GET',
+          async: false
+        },
+        columns: [
+          { title: 'Data', data: 'data',
+            render: function(row, type, data) {
+              var date = data.data ? italianFormat(data.data.split('T')[0]) : '';
+              var time = data.data ? data.data.split('T')[1] : '';
+              return date + ' ' + time;
+            }
+          },
+          { title: 'Operatore', data: 'operatore'},
+          { title: 'Tipo', data: 'tipo' },
+          { title: 'Valore', data: 'valore' },
+          { title: 'Esito', data: 'esito',
+            render: function(row, type, data) {
+
+              var str = data.esito;
+
+              if(data.esito.indexOf(',') != -1)   // se contiene il carattere ','
+                str = data.esito.substring(   // sottostringa dal carattere '[' al carattere ','
+                  data.esito.indexOf('[') + 1,
+                  data.esito.indexOf(',')
+                );
+              else if(data.esito.indexOf('[') != -1)
+                str = data.esito.substring(
+                  data.esito.indexOf('[') + 1,
+                  data.esito.indexOf(']')
+                );
+
+              return str;
+            }
+          },
+        ],
+        columnDefs: [
+          { width: "20%", targets: 0 },
+          { width: "20%", targets: 1 },
+          { width: "20%", className: 'text-md-center', targets: 2 },
+          { width: "20%", className: 'text-md-center', targets: 3 },
+          { width: "20%", className: 'text-md-center', targets: 4 }
+        ],
+        //createdRow: function( row, data, dataIndex){},
+        //destroy: true,
+        //stateSave: true,  //salva le azioni fatte anche dopo il refresh
+        scrollY: $(window).height()-475,
+        //scrollX: true,
+        //scrollCollapse: true, //Questo farà sì che il contenitore corrisponda all'altezza delle righe mostrate nella tabella se tale altezza è inferiore a quella data dal scrollY.
+        paging: false,
+        responsive: true,
+        lengthChange: false,
+        autoWidth: false,
+        buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+        language: {
+          //info: "_START_ da _END_ tot: _TOTAL_",
+          infoFiltered: "- filtrati: _TOTAL_",
+          info: "Ricerche totali: _MAX_",
+          infoEmpty: "0 risultati",
+          search: "Cerca:",
+          emptyTable: "Nessun risultato da mostrare"
+        },
+        order: [0, 'desc']
+      }).buttons().container().appendTo('#ricercheDataTable_wrapper .col-md-6:eq(0)');
+    }
+
+</script>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/sidebar">
+<head>
+    <title>Gierre | Impostazioni</title>
+</head>
+<body>
+
+<h1 class="m-0" layout:fragment="header">Impostazioni</h1>
+<li class="breadcrumb-item active" layout:fragment="header-item">Impostazioni</li>
+
+<div class="row" layout:fragment="row1">
+    <div class="col-12">
+        <div class="card" id="tableCard">
+            <div class="card-header">
+                <h3 class="card-title">Impostazioni</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <table id="impostazioniDataTable" class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th>A</th>
+                        <th>B</th>
+                        <th>C</th>
+                        <th>D</th>
+                    </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+            <!-- /.card-body -->
+            <div class="overlay">
+                <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+            </div>
+        </div>
+        <!-- /.card -->
+    </div>
+    <!-- /.col -->
+
+    <!-- Add User Modal-->
+    <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-light">
+                    <h5 class="modal-title" id="exampleModalLabel">Aggiungi Utente</h5>
+                    <button class="close text-light" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="card" id="addUserModalCard" style="box-shadow: 0 0 0, 0 0 0; margin-bottom: 0;">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="email" id="addUserModalEmail" class="form-control" aria-describedby="modalEmail" placeholder="Email" onkeyup="abilitaConferma()">
+                                <div class="valid-feedback">Ok!</div>
+                                <div class="invalid-feedback">Inserisci una mail valida.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" id="addUserModalPassword" class="form-control" aria-describedby="modalPassword" placeholder="Password" onkeyup="abilitaConferma()">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <select id="addUserModalRoleSelect" class="form-control mb-3" aria-label="Role select"></select>
+                            </div>
+                        </div>
+                        <div class="overlay">
+                            <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Annulla</button>
+                    <button id="addUserModalConfirmButton" type="button" class="btn btn-success" onclick="aggiungi()" disabled>Conferma</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- /.row -->
+
+
+
+<!-- Page specific script -->
+<th:block layout:fragment="script">
+    <script>
+
+        const regEmail = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+        $(function() {
+            $('.sidebar .nav-link:contains("Impostazioni")').addClass('bg-white active');
+            $('#tableCard .overlay').hide();
+            $('#addUserModalCard .overlay').hide();
+            getAllRuoli();
+            createDataTable();
+            $('.dt-buttons.btn-group.flex-wrap').prepend("<button class='btn btn-success mr-2' data-toggle='modal' data-target='#addUserModal'>AGGIUNGI</button>");
+        })
+
+        function showAlert(color, title, subtitle, message) {
+
+            $(document).Toasts('create', {
+                class: 'emme-toast bg-' + color,
+                title: title,
+                subtitle: subtitle,
+                body: message
+            })
+        }
+
+        function abilitaConferma() {
+
+            const email = $("#addUserModalEmail").val();
+            const password = $("#addUserModalPassword").val();
+
+            if(email == '' || password == '')
+                $('#addUserModalConfirmButton').attr('disabled',true);
+            else
+                $('#addUserModalConfirmButton').attr('disabled',false);
+        }
+
+        function aggiungi() {
+
+            var password = $('#addUserModalPassword').val();
+            var role = $('#addUserModalRoleSelect').val();
+            var email = $('#addUserModalEmail').val();
+            var validEmail = regEmail.test(String(email)) ? 'is-valid' : 'is-invalid';
+            $('#addUserModalEmail').removeClass().addClass('form-control ' + validEmail);
+
+            const user = {
+                username: email,
+                password: password,
+                role: role
+            }
+
+            if(validEmail == 'is-valid')
+                $.ajax({
+                    url : '/v1/api/knack/user/create?email=' + personalEmail,
+                    type : 'POST',
+                    dataType: 'json',
+                    contentType: "application/json;charset-UTF-8",
+                    data: JSON.stringify(user),
+                    beforeSend : function(f) {
+                        $('#addUserModalCard .overlay').show();
+                    },
+                    complete: function(f) {
+                        $('#addUserModalCard .overlay').hide();
+                        $('#impostazioniDataTable').DataTable().ajax.reload();
+                    },
+                    success : function(response) {
+                        showAlert('success', response.data.username, '', response.message);
+                    },
+                    error : function(response, textStatus, errorThrown) {
+                        showAlert('danger', email, '', 'Impossibile completare l\'operazione. ' + response.responseJSON.data.description);
+                    }
+                });
+        }
+
+        function elimina(username) {
+            $.ajax({
+                url : '/v1/api/knack/user/delete',
+                type : 'DELETE',
+                data: {
+                    emailAdmin: personalEmail,
+                    emailUser: username
+                },
+                beforeSend : function(f) {
+                    $('#tableCard .overlay').show();
+                },
+                complete: function(f) {
+                    $('#tableCard .overlay').hide();
+                    $('#impostazioniDataTable').DataTable().ajax.reload();
+                },
+                success : function(response) {
+                    showAlert('success', response.data.username, '', response.message);
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus + " " + errorThrown);
+                }
+            });
+        }
+
+        function getAllRuoli() {
+            $.ajax({
+                url : '/v1/api/knack/user/allRuoli',
+                type : 'POST',
+                data: {
+                    email: personalEmail
+                },
+                success : function(response) {
+                    var options = '';
+                    var descrizione = 'OPERATORE'
+                    for(var i=0; i<response.data.length; i++) {
+                        if(response.data[i] == 0)
+                            descrizione = 'ADMIN'
+                        else if(response.data[i] == 1)
+                            descrizione = 'RESPONSABILE'
+                        options += '<option value=' + response.data[i] + '>' + descrizione + '</option>';
+                    }
+                    $('#addUserModalRoleSelect').append(options);
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus + " " + errorThrown);
+                }
+            });
+        }
+
+        function createDataTable() {
+
+            $("#impostazioniDataTable").DataTable({
+                ajax: {
+                    url: '/v1/api/knack/user/get/all',
+                    type: 'POST',
+                    data: {
+                        email: personalEmail
+                    },
+                    async: false,
+                    dataSrc: function ( json ) {    // cambi il json di risposta
+                        for ( var i=0, ien=json.data.length ; i<ien ; i++ ) {
+                            json.data[i][3] = ' CANCELLA ';
+                        }
+                        return json.data;
+                    }
+                },
+                columns: [
+                    { title: 'Email', data: 'username' },
+                    { title: 'Password', data: 'password' },
+                    { title: 'Ruolo', data: 'role',
+                        render: function(row, type, data) {
+                            var response = 'Operatore'
+                            if(data.role == 1)
+                                response = 'Responsabile'
+                            else if(data.role == 0)
+                                response = 'Admin'
+                            return response;
+                        }
+                    },
+                    { title: 'Elimina',
+                        render: function(row, type, data) {
+                            return data.role === 0 ? '' : "<button type='button' id='utenteDelete"+data.id+"' class='btn btn-danger' onclick='elimina(\""+data.username+"\")'> Elimina </button>";
+                        }
+                    }
+                ],
+                columnDefs: [
+                    { width: "25%", targets: 0 },
+                    { width: "25%", className: 'text-md-center', targets: 1 },
+                    { width: "25%", className: 'text-md-center', targets: 2 },
+                    { width: "25%", className: 'text-md-center', orderable: false, targets: 3 }
+                ],
+                //dom: "<'row' <'col-md-8 text-center text-md-left'B>>" +
+                 //  "<'row' <'col-sm-12 text-center't> >" +
+                  // "<'row' <'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p> >",
+                //createdRow: function( row, data, dataIndex){},
+                //destroy: true,
+                //stateSave: true,  //salva le azioni fatte anche dopo il refresh
+                scrollY: $(window).height()-475,
+                //scrollX: true,
+                //scrollCollapse: true, //Questo farà sì che il contenitore corrisponda all'altezza delle righe mostrate nella tabella se tale altezza è inferiore a quella data dal scrollY.
+                paging: false,
+                responsive: true,
+                lengthChange: false,
+                autoWidth: false,
+                buttons: ["copy", "csv", "excel", "pdf", "print", "colvis"],
+                language: {
+                    //info: "_START_ da _END_ tot: _TOTAL_",
+                    infoFiltered: "- filtrati: _TOTAL_",
+                    info: "Utenti totali: _MAX_",
+                    infoEmpty: "0 risultati",
+                    search: "Cerca:",
+                    emptyTable: "Nessun risultato da mostrare"
+                },
+                order: [2, 'asc']
+            }).buttons().container().appendTo('#impostazioniDataTable_wrapper .col-md-6:eq(0)');
+        }
+
+    </script>
+</th:block>
+</body>
+</html>

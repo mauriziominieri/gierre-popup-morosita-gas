@@ -1,0 +1,57 @@
+spring:
+  datasource:
+    # PERSONAL DB
+    #url: &dbURL jdbc:mysql://localhost:3306/gierre_db?useSSL=false
+    #username: &dbUser gierre_app
+    #password: &dbPassword gierre_password
+
+    #PROD DB
+    url: &dbURL jdbc:mysql://35.198.118.112:3306/podpdrmorosita_db?useSSL=false
+
+    #TEST DB
+    #url: &dbURL jdbc:mysql://34.78.205.218:3306/podpdrmorosita_db?useSSL=false
+
+    #Credentials
+    username: &dbUser root
+    password: &dbPassword playdevelopers@1
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  thymeleaf:
+    enabled: true
+    suffix: .html
+    check-template-location: true
+    servlet:
+      content-type: text/html
+    prefix: classpath:/templates/
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "info.gierrecontact@gmail.com"
+    password: "Gierre1993"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+KtEnvConfig:
+  knack:
+    popup-pod-url: "https://eu-central-1-renderer-read.knack.com/v1/scenes/scene_2/views/view_10/records"
+    popup-pdr-url: "https://eu-central-1-renderer-read.knack.com/v1/scenes/scene_2/views/view_11/records"
+    popup-morosita-url: "https://eu-central-1-renderer-read.knack.com/v1/scenes/scene_2/views/view_13/records"
+    controllo-gas-url: "https://eu-central-1-renderer-read.knack.com/v1/scenes/scene_2/views/view_8/records"
+  system:
+    env: "local"
+    prod-url: https://gierre-podpdrmorosita-webservice-tqsgvxvlmq-nw.a.run.app
+    local-url: http://localhost:8080
